@@ -2,7 +2,6 @@
 -- name: CreateEnterprise :one
 INSERT INTO "enterprise" (
   "title", 
-  "document_verification", 
   "phone", 
   "email", 
   "contact", 
@@ -20,7 +19,7 @@ INSERT INTO "enterprise" (
   "created_by"
 )
 VALUES (
-  $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, now(), $16
+  $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, now(), $15
 )
 RETURNING *;
 
@@ -37,24 +36,23 @@ WHERE "id" = $1;
 UPDATE "enterprise"
 SET 
   "title" = COALESCE($1, "title"),
-  "document_verification" = COALESCE($2, "document_verification"),
-  "phone" = COALESCE($3, "phone"),
-  "email" = COALESCE($4, "email"),
-  "contact" = COALESCE($5, "contact"),
-  "contact_phone" = COALESCE($6, "contact_phone"),
-  "files" = COALESCE($7, "files"),
-  "address" = COALESCE($8, "address"),
-  "web" = COALESCE($9, "web"),
-  "is_authenticated" = COALESCE($10, "is_authenticated"),
-  "status" = COALESCE($11, "status"),
-  "removable" = COALESCE($12, "removable"),
-  "editable" = COALESCE($13, "editable"),
-  "is_visible" = COALESCE($14, "is_visible"),
-  "default" = COALESCE($15, "default"),
+  "phone" = COALESCE($2, "phone"),
+  "email" = COALESCE($3, "email"),
+  "contact" = COALESCE($4, "contact"),
+  "contact_phone" = COALESCE($5, "contact_phone"),
+  "files" = COALESCE($6, "files"),
+  "address" = COALESCE($7, "address"),
+  "web" = COALESCE($8, "web"),
+  "is_authenticated" = COALESCE($9, "is_authenticated"),
+  "status" = COALESCE($10, "status"),
+  "removable" = COALESCE($11, "removable"),
+  "editable" = COALESCE($12, "editable"),
+  "is_visible" = COALESCE($13, "is_visible"),
+  "default" = COALESCE($14, "default"),
   "updated_at" = now(),
-  "updated_by" = COALESCE($16, "updated_by")
+  "updated_by" = COALESCE($15, "updated_by")
 WHERE 
-  "id" = $17
+  "id" = $16
 RETURNING *;
 
 

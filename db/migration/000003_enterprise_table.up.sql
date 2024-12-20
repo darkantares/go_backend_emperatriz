@@ -1,10 +1,11 @@
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 CREATE TABLE "enterprise" (
   "id" serial PRIMARY KEY,
   "title" varchar UNIQUE NOT NULL,
-  "document_verification" varchar NOT NULL,
   "phone" varchar NOT NULL,
   "email" varchar UNIQUE NOT NULL,
-  "contact" varchar,
+  "contact" varchar NOT NULL,
   "contact_phone" varchar NOT NULL,
   "files" varchar NOT NULL,
   "address" varchar NOT NULL,

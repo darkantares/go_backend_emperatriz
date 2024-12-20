@@ -14,7 +14,6 @@ import (
 const createEnterprise = `-- name: CreateEnterprise :one
 INSERT INTO "enterprise" (
   "title", 
-  "document_verification", 
   "phone", 
   "email", 
   "contact", 
@@ -22,32 +21,42 @@ INSERT INTO "enterprise" (
   "files", 
   "address", 
   "web", 
-  "is_authenticated", 
-  "info_table_id"
-) VALUES (
-  $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
+  "is_authenticated",
+  "status",
+  "removable",
+  "editable",
+  "is_visible",
+  "default",
+  "created_at", 
+  "created_by"
 )
-RETURNING id, title, document_verification, phone, email, contact, contact_phone, files, address, web, "is_authenticated", info_table_id
+VALUES (
+  $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, now(), $15
+)
+RETURNING id, title, phone, email, contact, contact_phone, files, address, web, is_authenticated, status, removable, editable, is_visible, "default", created_at, updated_at, deleted_at, created_by, updated_by, deleted_by
 `
 
 type CreateEnterpriseParams struct {
-	Title                string      `json:"title"`
-	DocumentVerification string      `json:"document_verification"`
-	Phone                string      `json:"phone"`
-	Email                string      `json:"email"`
-	Contact              pgtype.Text `json:"contact"`
-	ContactPhone         string      `json:"contact_phone"`
-	Files                string      `json:"files"`
-	Address              string      `json:"address"`
-	Web                  string      `json:"web"`
-	IsAuthenticated      bool        `json:"is_authenticated"`
-	InfoTableID          pgtype.Int4 `json:"info_table_id"`
+	Title           string      `json:"title"`
+	Phone           string      `json:"phone"`
+	Email           string      `json:"email"`
+	Contact         string      `json:"contact"`
+	ContactPhone    string      `json:"contact_phone"`
+	Files           string      `json:"files"`
+	Address         string      `json:"address"`
+	Web             string      `json:"web"`
+	IsAuthenticated bool        `json:"is_authenticated"`
+	Status          bool        `json:"status"`
+	Removable       bool        `json:"removable"`
+	Editable        bool        `json:"editable"`
+	IsVisible       bool        `json:"is_visible"`
+	Default         bool        `json:"default"`
+	CreatedBy       pgtype.Int4 `json:"created_by"`
 }
 
 func (q *Queries) CreateEnterprise(ctx context.Context, arg CreateEnterpriseParams) (Enterprise, error) {
 	row := q.db.QueryRow(ctx, createEnterprise,
 		arg.Title,
-		arg.DocumentVerification,
 		arg.Phone,
 		arg.Email,
 		arg.Contact,
@@ -56,13 +65,17 @@ func (q *Queries) CreateEnterprise(ctx context.Context, arg CreateEnterprisePara
 		arg.Address,
 		arg.Web,
 		arg.IsAuthenticated,
-		arg.InfoTableID,
+		arg.Status,
+		arg.Removable,
+		arg.Editable,
+		arg.IsVisible,
+		arg.Default,
+		arg.CreatedBy,
 	)
 	var i Enterprise
 	err := row.Scan(
 		&i.ID,
 		&i.Title,
-		&i.DocumentVerification,
 		&i.Phone,
 		&i.Email,
 		&i.Contact,
@@ -71,13 +84,68 @@ func (q *Queries) CreateEnterprise(ctx context.Context, arg CreateEnterprisePara
 		&i.Address,
 		&i.Web,
 		&i.IsAuthenticated,
-		&i.InfoTableID,
+		&i.Status,
+		&i.Removable,
+		&i.Editable,
+		&i.IsVisible,
+		&i.Default,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+		&i.CreatedBy,
+		&i.UpdatedBy,
+		&i.DeletedBy,
+	)
+	return i, err
+}
+
+const deleteEnterprise = `-- name: DeleteEnterprise :one
+UPDATE "enterprise"
+SET 
+  "status" = false,
+  "deleted_at" = now(),
+  "deleted_by" = $1
+WHERE 
+  "id" = $2
+RETURNING id, title, phone, email, contact, contact_phone, files, address, web, is_authenticated, status, removable, editable, is_visible, "default", created_at, updated_at, deleted_at, created_by, updated_by, deleted_by
+`
+
+type DeleteEnterpriseParams struct {
+	DeletedBy pgtype.Int4 `json:"deleted_by"`
+	ID        int32       `json:"id"`
+}
+
+func (q *Queries) DeleteEnterprise(ctx context.Context, arg DeleteEnterpriseParams) (Enterprise, error) {
+	row := q.db.QueryRow(ctx, deleteEnterprise, arg.DeletedBy, arg.ID)
+	var i Enterprise
+	err := row.Scan(
+		&i.ID,
+		&i.Title,
+		&i.Phone,
+		&i.Email,
+		&i.Contact,
+		&i.ContactPhone,
+		&i.Files,
+		&i.Address,
+		&i.Web,
+		&i.IsAuthenticated,
+		&i.Status,
+		&i.Removable,
+		&i.Editable,
+		&i.IsVisible,
+		&i.Default,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+		&i.CreatedBy,
+		&i.UpdatedBy,
+		&i.DeletedBy,
 	)
 	return i, err
 }
 
 const getEnterprise = `-- name: GetEnterprise :one
-SELECT id, title, document_verification, phone, email, contact, contact_phone, files, address, web, "is_authenticated", info_table_id 
+SELECT id, title, phone, email, contact, contact_phone, files, address, web, is_authenticated, status, removable, editable, is_visible, "default", created_at, updated_at, deleted_at, created_by, updated_by, deleted_by 
 FROM "enterprise"
 WHERE "id" = $1
 `
@@ -88,7 +156,6 @@ func (q *Queries) GetEnterprise(ctx context.Context, id int32) (Enterprise, erro
 	err := row.Scan(
 		&i.ID,
 		&i.Title,
-		&i.DocumentVerification,
 		&i.Phone,
 		&i.Email,
 		&i.Contact,
@@ -97,13 +164,23 @@ func (q *Queries) GetEnterprise(ctx context.Context, id int32) (Enterprise, erro
 		&i.Address,
 		&i.Web,
 		&i.IsAuthenticated,
-		&i.InfoTableID,
+		&i.Status,
+		&i.Removable,
+		&i.Editable,
+		&i.IsVisible,
+		&i.Default,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+		&i.CreatedBy,
+		&i.UpdatedBy,
+		&i.DeletedBy,
 	)
 	return i, err
 }
 
 const listEnterprises = `-- name: ListEnterprises :many
-SELECT id, title, document_verification, phone, email, contact, contact_phone, files, address, web, "is_authenticated", info_table_id FROM "enterprise"
+SELECT id, title, phone, email, contact, contact_phone, files, address, web, is_authenticated, status, removable, editable, is_visible, "default", created_at, updated_at, deleted_at, created_by, updated_by, deleted_by FROM "enterprise"
 `
 
 func (q *Queries) ListEnterprises(ctx context.Context) ([]Enterprise, error) {
@@ -118,7 +195,6 @@ func (q *Queries) ListEnterprises(ctx context.Context) ([]Enterprise, error) {
 		if err := rows.Scan(
 			&i.ID,
 			&i.Title,
-			&i.DocumentVerification,
 			&i.Phone,
 			&i.Email,
 			&i.Contact,
@@ -127,7 +203,17 @@ func (q *Queries) ListEnterprises(ctx context.Context) ([]Enterprise, error) {
 			&i.Address,
 			&i.Web,
 			&i.IsAuthenticated,
-			&i.InfoTableID,
+			&i.Status,
+			&i.Removable,
+			&i.Editable,
+			&i.IsVisible,
+			&i.Default,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+			&i.CreatedBy,
+			&i.UpdatedBy,
+			&i.DeletedBy,
 		); err != nil {
 			return nil, err
 		}
@@ -142,41 +228,49 @@ func (q *Queries) ListEnterprises(ctx context.Context) ([]Enterprise, error) {
 const updateEnterprise = `-- name: UpdateEnterprise :one
 UPDATE "enterprise"
 SET 
-  "title" = $1,
-  "document_verification" = $2,
-  "phone" = $3,
-  "email" = $4,
-  "contact" = $5,
-  "contact_phone" = $6,
-  "files" = $7,
-  "address" = $8,
-  "web" = $9,
-  "is_authenticated" = $10,
-  "info_table_id" = $11
+  "title" = COALESCE($1, "title"),
+  "phone" = COALESCE($2, "phone"),
+  "email" = COALESCE($3, "email"),
+  "contact" = COALESCE($4, "contact"),
+  "contact_phone" = COALESCE($5, "contact_phone"),
+  "files" = COALESCE($6, "files"),
+  "address" = COALESCE($7, "address"),
+  "web" = COALESCE($8, "web"),
+  "is_authenticated" = COALESCE($9, "is_authenticated"),
+  "status" = COALESCE($10, "status"),
+  "removable" = COALESCE($11, "removable"),
+  "editable" = COALESCE($12, "editable"),
+  "is_visible" = COALESCE($13, "is_visible"),
+  "default" = COALESCE($14, "default"),
+  "updated_at" = now(),
+  "updated_by" = COALESCE($15, "updated_by")
 WHERE 
-  "id" = $12
-RETURNING id, title, document_verification, phone, email, contact, contact_phone, files, address, web, "is_authenticated", info_table_id
+  "id" = $16
+RETURNING id, title, phone, email, contact, contact_phone, files, address, web, is_authenticated, status, removable, editable, is_visible, "default", created_at, updated_at, deleted_at, created_by, updated_by, deleted_by
 `
 
 type UpdateEnterpriseParams struct {
-	Title                string      `json:"title"`
-	DocumentVerification string      `json:"document_verification"`
-	Phone                string      `json:"phone"`
-	Email                string      `json:"email"`
-	Contact              pgtype.Text `json:"contact"`
-	ContactPhone         string      `json:"contact_phone"`
-	Files                string      `json:"files"`
-	Address              string      `json:"address"`
-	Web                  string      `json:"web"`
-	IsAuthenticated      bool        `json:"is_authenticated"`
-	InfoTableID          pgtype.Int4 `json:"info_table_id"`
-	ID                   int32       `json:"id"`
+	Title           string      `json:"title"`
+	Phone           string      `json:"phone"`
+	Email           string      `json:"email"`
+	Contact         string      `json:"contact"`
+	ContactPhone    string      `json:"contact_phone"`
+	Files           string      `json:"files"`
+	Address         string      `json:"address"`
+	Web             string      `json:"web"`
+	IsAuthenticated bool        `json:"is_authenticated"`
+	Status          bool        `json:"status"`
+	Removable       bool        `json:"removable"`
+	Editable        bool        `json:"editable"`
+	IsVisible       bool        `json:"is_visible"`
+	Default         bool        `json:"default"`
+	UpdatedBy       pgtype.Int4 `json:"updated_by"`
+	ID              int32       `json:"id"`
 }
 
 func (q *Queries) UpdateEnterprise(ctx context.Context, arg UpdateEnterpriseParams) (Enterprise, error) {
 	row := q.db.QueryRow(ctx, updateEnterprise,
 		arg.Title,
-		arg.DocumentVerification,
 		arg.Phone,
 		arg.Email,
 		arg.Contact,
@@ -185,14 +279,18 @@ func (q *Queries) UpdateEnterprise(ctx context.Context, arg UpdateEnterprisePara
 		arg.Address,
 		arg.Web,
 		arg.IsAuthenticated,
-		arg.InfoTableID,
+		arg.Status,
+		arg.Removable,
+		arg.Editable,
+		arg.IsVisible,
+		arg.Default,
+		arg.UpdatedBy,
 		arg.ID,
 	)
 	var i Enterprise
 	err := row.Scan(
 		&i.ID,
 		&i.Title,
-		&i.DocumentVerification,
 		&i.Phone,
 		&i.Email,
 		&i.Contact,
@@ -201,7 +299,17 @@ func (q *Queries) UpdateEnterprise(ctx context.Context, arg UpdateEnterprisePara
 		&i.Address,
 		&i.Web,
 		&i.IsAuthenticated,
-		&i.InfoTableID,
+		&i.Status,
+		&i.Removable,
+		&i.Editable,
+		&i.IsVisible,
+		&i.Default,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+		&i.CreatedBy,
+		&i.UpdatedBy,
+		&i.DeletedBy,
 	)
 	return i, err
 }

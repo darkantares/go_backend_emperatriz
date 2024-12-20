@@ -1,12 +1,27 @@
 -- name: CreateUser :one
 INSERT INTO "users" (
-  "is_authenticated", "email", "password", "phone", "full_name", 
-  "username", "password_changed_at", "status", "removable", 
-  "editable", "is_visible", "default", "created_at", "created_by", 
-  "updated_at", "updated_by", "deleted_at", "deleted_by", "enterprise_id"
+  "is_authenticated", 
+  "email", 
+  "password", 
+  "phone",
+  "full_name",
+  "username",
+  "password_changed_at",
+  "status",
+  "removable",
+  "editable",
+  "is_visible",
+  "default",
+  "created_at",
+  "created_by",
+  "updated_at",
+  "updated_by",
+  "deleted_at",
+  "deleted_by",
+  "enterprise_id"
 ) 
 VALUES (
-  $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18
+  $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19
 )
 RETURNING *;
 
@@ -15,20 +30,8 @@ SELECT * FROM users
 WHERE email = $1 LIMIT 1;
 
 -- name: UpdateUser :one
-UPDATE users
-SET
-  password = COALESCE(sqlc.narg(password), password),
-  password_changed_at = COALESCE(sqlc.narg(password_changed_at), password_changed_at),
-  full_name = COALESCE(sqlc.narg(full_name), full_name),
-  email = COALESCE(sqlc.narg(email), email),
-  is_email_verified = COALESCE(sqlc.narg(is_email_verified), is_email_verified)
-WHERE
-  username = sqlc.arg(username)
-RETURNING *;
-
--- name: UpdateUser :one
 UPDATE "users"
-SET 
+SET
   "is_authenticated" = COALESCE($1, "is_authenticated"),
   "email" = COALESCE($2, "email"),
   "password" = COALESCE($3, "password"),
@@ -41,15 +44,16 @@ SET
   "editable" = COALESCE($10, "editable"),
   "is_visible" = COALESCE($11, "is_visible"),
   "default" = COALESCE($12, "default"),
-  "updated_at" = COALESCE($13, "updated_at"),
-  "updated_by" = COALESCE($14, "updated_by"),
-  "deleted_at" = COALESCE($15, "deleted_at"),
-  "deleted_by" = COALESCE($16, "deleted_by"),
-  "enterprise_id" = COALESCE($17, "enterprise_id")
-WHERE 
-  "id" = $18
+  "created_at" = COALESCE($13, "created_at"),
+  "created_by" = COALESCE($14, "created_by"),
+  "updated_at" = COALESCE($15, "updated_at"),
+  "updated_by" = COALESCE($16, "updated_by"),
+  "deleted_at" = COALESCE($17, "deleted_at"),
+  "deleted_by" = COALESCE($18, "deleted_by"),
+  "enterprise_id" = COALESCE($19, "enterprise_id")
+WHERE
+  "id" = $20
 RETURNING *;
-
 
 -- name: DeleteUser :one
 UPDATE "users"

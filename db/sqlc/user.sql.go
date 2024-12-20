@@ -7,32 +7,81 @@ package db
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO users (
-  username,
-  password,
-  full_name,
-  email
-) VALUES (
-  $1, $2, $3, $4
-) RETURNING id, "is_authenticated", email, password, phone, full_name, username, password_changed_at, info_table_id, enterprise_id
+INSERT INTO "users" (
+  "is_authenticated", 
+  "email", 
+  "password", 
+  "phone",
+  "full_name",
+  "username",
+  "password_changed_at",
+  "status",
+  "removable",
+  "editable",
+  "is_visible",
+  "default",
+  "created_at",
+  "created_by",
+  "updated_at",
+  "updated_by",
+  "deleted_at",
+  "deleted_by",
+  "enterprise_id"
+) 
+VALUES (
+  $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19
+)
+RETURNING id, is_authenticated, email, password, phone, full_name, username, status, removable, editable, is_visible, "default", password_changed_at, created_at, updated_at, deleted_at, enterprise_id, created_by, updated_by, deleted_by
 `
 
 type CreateUserParams struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-	FullName string `json:"full_name"`
-	Email    string `json:"email"`
+	IsAuthenticated   bool               `json:"is_authenticated"`
+	Email             string             `json:"email"`
+	Password          string             `json:"password"`
+	Phone             pgtype.Text        `json:"phone"`
+	FullName          string             `json:"full_name"`
+	Username          string             `json:"username"`
+	PasswordChangedAt pgtype.Timestamptz `json:"password_changed_at"`
+	Status            bool               `json:"status"`
+	Removable         bool               `json:"removable"`
+	Editable          bool               `json:"editable"`
+	IsVisible         bool               `json:"is_visible"`
+	Default           bool               `json:"default"`
+	CreatedAt         pgtype.Timestamptz `json:"created_at"`
+	CreatedBy         pgtype.Int4        `json:"created_by"`
+	UpdatedAt         pgtype.Timestamptz `json:"updated_at"`
+	UpdatedBy         pgtype.Int4        `json:"updated_by"`
+	DeletedAt         pgtype.Timestamptz `json:"deleted_at"`
+	DeletedBy         pgtype.Int4        `json:"deleted_by"`
+	EnterpriseID      pgtype.Int4        `json:"enterprise_id"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
 	row := q.db.QueryRow(ctx, createUser,
-		arg.Username,
-		arg.Password,
-		arg.FullName,
+		arg.IsAuthenticated,
 		arg.Email,
+		arg.Password,
+		arg.Phone,
+		arg.FullName,
+		arg.Username,
+		arg.PasswordChangedAt,
+		arg.Status,
+		arg.Removable,
+		arg.Editable,
+		arg.IsVisible,
+		arg.Default,
+		arg.CreatedAt,
+		arg.CreatedBy,
+		arg.UpdatedAt,
+		arg.UpdatedBy,
+		arg.DeletedAt,
+		arg.DeletedBy,
+		arg.EnterpriseID,
 	)
 	var i User
 	err := row.Scan(
@@ -43,15 +92,69 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.Phone,
 		&i.FullName,
 		&i.Username,
+		&i.Status,
+		&i.Removable,
+		&i.Editable,
+		&i.IsVisible,
+		&i.Default,
 		&i.PasswordChangedAt,
-		&i.InfoTableID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
 		&i.EnterpriseID,
+		&i.CreatedBy,
+		&i.UpdatedBy,
+		&i.DeletedBy,
+	)
+	return i, err
+}
+
+const deleteUser = `-- name: DeleteUser :one
+UPDATE "users"
+SET 
+  "status" = false,  -- Asumiendo que 'Deleted' es el estado para marcar un usuario como eliminado
+  "deleted_at" = now(),
+  "deleted_by" = $1  -- El ID del usuario que realiza la eliminación
+WHERE 
+  "id" = $2
+RETURNING id, is_authenticated, email, password, phone, full_name, username, status, removable, editable, is_visible, "default", password_changed_at, created_at, updated_at, deleted_at, enterprise_id, created_by, updated_by, deleted_by
+`
+
+type DeleteUserParams struct {
+	DeletedBy pgtype.Int4 `json:"deleted_by"`
+	ID        int32       `json:"id"`
+}
+
+func (q *Queries) DeleteUser(ctx context.Context, arg DeleteUserParams) (User, error) {
+	row := q.db.QueryRow(ctx, deleteUser, arg.DeletedBy, arg.ID)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.IsAuthenticated,
+		&i.Email,
+		&i.Password,
+		&i.Phone,
+		&i.FullName,
+		&i.Username,
+		&i.Status,
+		&i.Removable,
+		&i.Editable,
+		&i.IsVisible,
+		&i.Default,
+		&i.PasswordChangedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+		&i.EnterpriseID,
+		&i.CreatedBy,
+		&i.UpdatedBy,
+		&i.DeletedBy,
 	)
 	return i, err
 }
 
 const getUser = `-- name: GetUser :one
-SELECT id, "is_authenticated", email, password, phone, full_name, username, password_changed_at, info_table_id, enterprise_id FROM users
+SELECT id, is_authenticated, email, password, phone, full_name, username, status, removable, editable, is_visible, "default", password_changed_at, created_at, updated_at, deleted_at, enterprise_id, created_by, updated_by, deleted_by FROM users
 WHERE email = $1 LIMIT 1
 `
 
@@ -66,9 +169,118 @@ func (q *Queries) GetUser(ctx context.Context, email string) (User, error) {
 		&i.Phone,
 		&i.FullName,
 		&i.Username,
+		&i.Status,
+		&i.Removable,
+		&i.Editable,
+		&i.IsVisible,
+		&i.Default,
 		&i.PasswordChangedAt,
-		&i.InfoTableID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
 		&i.EnterpriseID,
+		&i.CreatedBy,
+		&i.UpdatedBy,
+		&i.DeletedBy,
+	)
+	return i, err
+}
+
+const updateUser = `-- name: UpdateUser :one
+UPDATE "users"
+SET
+  "is_authenticated" = COALESCE($1, "is_authenticated"),
+  "email" = COALESCE($2, "email"),
+  "password" = COALESCE($3, "password"),
+  "phone" = COALESCE($4, "phone"),
+  "full_name" = COALESCE($5, "full_name"),
+  "username" = COALESCE($6, "username"),
+  "password_changed_at" = COALESCE($7, "password_changed_at"),
+  "status" = COALESCE($8, "status"),
+  "removable" = COALESCE($9, "removable"),
+  "editable" = COALESCE($10, "editable"),
+  "is_visible" = COALESCE($11, "is_visible"),
+  "default" = COALESCE($12, "default"),
+  "created_at" = COALESCE($13, "created_at"),
+  "created_by" = COALESCE($14, "created_by"),
+  "updated_at" = COALESCE($15, "updated_at"),
+  "updated_by" = COALESCE($16, "updated_by"),
+  "deleted_at" = COALESCE($17, "deleted_at"),
+  "deleted_by" = COALESCE($18, "deleted_by"),
+  "enterprise_id" = COALESCE($19, "enterprise_id")
+WHERE
+  "id" = $20
+RETURNING id, is_authenticated, email, password, phone, full_name, username, status, removable, editable, is_visible, "default", password_changed_at, created_at, updated_at, deleted_at, enterprise_id, created_by, updated_by, deleted_by
+`
+
+type UpdateUserParams struct {
+	IsAuthenticated   bool               `json:"is_authenticated"`
+	Email             string             `json:"email"`
+	Password          string             `json:"password"`
+	Phone             pgtype.Text        `json:"phone"`
+	FullName          string             `json:"full_name"`
+	Username          string             `json:"username"`
+	PasswordChangedAt pgtype.Timestamptz `json:"password_changed_at"`
+	Status            bool               `json:"status"`
+	Removable         bool               `json:"removable"`
+	Editable          bool               `json:"editable"`
+	IsVisible         bool               `json:"is_visible"`
+	Default           bool               `json:"default"`
+	CreatedAt         pgtype.Timestamptz `json:"created_at"`
+	CreatedBy         pgtype.Int4        `json:"created_by"`
+	UpdatedAt         pgtype.Timestamptz `json:"updated_at"`
+	UpdatedBy         pgtype.Int4        `json:"updated_by"`
+	DeletedAt         pgtype.Timestamptz `json:"deleted_at"`
+	DeletedBy         pgtype.Int4        `json:"deleted_by"`
+	EnterpriseID      pgtype.Int4        `json:"enterprise_id"`
+	ID                int32              `json:"id"`
+}
+
+func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error) {
+	row := q.db.QueryRow(ctx, updateUser,
+		arg.IsAuthenticated,
+		arg.Email,
+		arg.Password,
+		arg.Phone,
+		arg.FullName,
+		arg.Username,
+		arg.PasswordChangedAt,
+		arg.Status,
+		arg.Removable,
+		arg.Editable,
+		arg.IsVisible,
+		arg.Default,
+		arg.CreatedAt,
+		arg.CreatedBy,
+		arg.UpdatedAt,
+		arg.UpdatedBy,
+		arg.DeletedAt,
+		arg.DeletedBy,
+		arg.EnterpriseID,
+		arg.ID,
+	)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.IsAuthenticated,
+		&i.Email,
+		&i.Password,
+		&i.Phone,
+		&i.FullName,
+		&i.Username,
+		&i.Status,
+		&i.Removable,
+		&i.Editable,
+		&i.IsVisible,
+		&i.Default,
+		&i.PasswordChangedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+		&i.EnterpriseID,
+		&i.CreatedBy,
+		&i.UpdatedBy,
+		&i.DeletedBy,
 	)
 	return i, err
 }

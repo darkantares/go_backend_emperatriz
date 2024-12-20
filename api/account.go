@@ -3,7 +3,6 @@ package api
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 	"net/http"
 
 	db "github.com/darkantares/go_backend_emperatriz/db/sqlc"
@@ -87,7 +86,6 @@ func (server *Server) createAccount(ctx *gin.Context) {
 		Currency: req.Currency,
 		Balance:  0,
 	}
-	fmt.Println(arg)
 	account, err := server.store.CreateAccount(ctx, arg)
 
 	if err != nil {

@@ -17,25 +17,44 @@ type Account struct {
 }
 
 type Brand struct {
-	ID           int32       `json:"id"`
-	Title        string      `json:"title"`
-	InfoTableID  pgtype.Int4 `json:"info_table_id"`
-	EnterpriseID pgtype.Int4 `json:"enterprise_id"`
+	ID           int32              `json:"id"`
+	Title        string             `json:"title"`
+	Status       bool               `json:"status"`
+	Removable    bool               `json:"removable"`
+	Editable     bool               `json:"editable"`
+	IsVisible    bool               `json:"is_visible"`
+	Default      bool               `json:"default"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
+	DeletedAt    pgtype.Timestamptz `json:"deleted_at"`
+	CreatedBy    pgtype.Int4        `json:"created_by"`
+	UpdatedBy    pgtype.Int4        `json:"updated_by"`
+	DeletedBy    pgtype.Int4        `json:"deleted_by"`
+	EnterpriseID pgtype.Int4        `json:"enterprise_id"`
 }
 
 type Enterprise struct {
-	ID                   int32       `json:"id"`
-	Title                string      `json:"title"`
-	DocumentVerification string      `json:"document_verification"`
-	Phone                string      `json:"phone"`
-	Email                string      `json:"email"`
-	Contact              pgtype.Text `json:"contact"`
-	ContactPhone         string      `json:"contact_phone"`
-	Files                string      `json:"files"`
-	Address              string      `json:"address"`
-	Web                  string      `json:"web"`
-	IsAuthenticated      bool        `json:"is_authenticated"`
-	InfoTableID          pgtype.Int4 `json:"info_table_id"`
+	ID              int32              `json:"id"`
+	Title           string             `json:"title"`
+	Phone           string             `json:"phone"`
+	Email           string             `json:"email"`
+	Contact         string             `json:"contact"`
+	ContactPhone    string             `json:"contact_phone"`
+	Files           string             `json:"files"`
+	Address         string             `json:"address"`
+	Web             string             `json:"web"`
+	IsAuthenticated bool               `json:"is_authenticated"`
+	Status          bool               `json:"status"`
+	Removable       bool               `json:"removable"`
+	Editable        bool               `json:"editable"`
+	IsVisible       bool               `json:"is_visible"`
+	Default         bool               `json:"default"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
+	DeletedAt       pgtype.Timestamptz `json:"deleted_at"`
+	CreatedBy       pgtype.Int4        `json:"created_by"`
+	UpdatedBy       pgtype.Int4        `json:"updated_by"`
+	DeletedBy       pgtype.Int4        `json:"deleted_by"`
 }
 
 type Entry struct {
@@ -44,21 +63,6 @@ type Entry struct {
 	// can be negative or positive
 	Amount    int64              `json:"amount"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
-}
-
-type InfoTable struct {
-	ID        int32              `json:"id"`
-	Status    string             `json:"status"`
-	Removable bool               `json:"removable"`
-	Editable  bool               `json:"editable"`
-	IsVisible bool               `json:"is_visible"`
-	Default   bool               `json:"default"`
-	CreatedAt pgtype.Timestamptz `json:"created_at"`
-	CreatedBy pgtype.Text        `json:"created_by"`
-	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
-	UpdatedBy pgtype.Text        `json:"updated_by"`
-	DeletedAt pgtype.Timestamptz `json:"deleted_at"`
-	DeletedBy pgtype.Text        `json:"deleted_by"`
 }
 
 type Transfer struct {
@@ -78,7 +82,17 @@ type User struct {
 	Phone             pgtype.Text        `json:"phone"`
 	FullName          string             `json:"full_name"`
 	Username          string             `json:"username"`
+	Status            bool               `json:"status"`
+	Removable         bool               `json:"removable"`
+	Editable          bool               `json:"editable"`
+	IsVisible         bool               `json:"is_visible"`
+	Default           bool               `json:"default"`
 	PasswordChangedAt pgtype.Timestamptz `json:"password_changed_at"`
-	InfoTableID       pgtype.Int4        `json:"info_table_id"`
+	CreatedAt         pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt         pgtype.Timestamptz `json:"updated_at"`
+	DeletedAt         pgtype.Timestamptz `json:"deleted_at"`
 	EnterpriseID      pgtype.Int4        `json:"enterprise_id"`
+	CreatedBy         pgtype.Int4        `json:"created_by"`
+	UpdatedBy         pgtype.Int4        `json:"updated_by"`
+	DeletedBy         pgtype.Int4        `json:"deleted_by"`
 }
